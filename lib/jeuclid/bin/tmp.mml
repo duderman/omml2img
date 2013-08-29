@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mml:math xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math"><mml:mfrac><mml:mrow><mml:mrow><mml:mo stretchy="false">∑</mml:mo><mml:mrow><mml:mrow><mml:mo stretchy="false">∭</mml:mo><mml:mrow><mml:mi>d</mml:mi></mml:mrow></mml:mrow><mml:mo>∓</mml:mo><mml:mo>−</mml:mo><mml:mi>a</mml:mi></mml:mrow></mml:mrow><mml:mo>+</mml:mo><mml:mi>z</mml:mi></mml:mrow><mml:mrow><mml:mi>∞</mml:mi><mml:mo>∂</mml:mo><mml:mfenced open="⟦" close="⟧" separators="|"><mml:mrow><mml:mi>a</mml:mi></mml:mrow></mml:mfenced></mml:mrow></mml:mfrac></mml:math>
+
