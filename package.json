@@ -4,14 +4,12 @@
   "version": "0.0.1",
   "author": {
     "name": "Nikolay Norkin",
-    "email": "n.e.norkin@gmail.com"
+    "email": "n.e.norkin@gmail.com",
+    "url": "zduderman.blogspot.ru"
   },
   "dependencies": {
     "jsdeferred": ">=0.4.0",
     "node_xslt": ">=0.1.8"
-  },
-  "bundleDependencies": {
-    "JEuclid": "http://jeuclid.sourceforge.net/"
   },
   "engines": {
     "node": ">=0.8.14"
@@ -29,15 +27,13 @@
     "type": "git",
     "url": "git://github.com/duderman/omml2img.git"
   },
-  "bugs": {
-    "url": "http://github.com/duderman/omml2img/issues"
-  },
   "licenses": [
     {
-      "url": "https://github.com/duderman/omml2img/blob/master/LICENSE",
-      "type": "MIT"
+      "type": "MIT",
+      "url": "https://github.com/duderman/omml2img/blob/master/LICENSE"
     }
   ],
+  "homepage": "http://github.com/duderman/omml2img",
   "main": "index",
   "readmeFilename": "README.md",
   "_id": "omml2img@0.0.1",
