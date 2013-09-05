@@ -21,8 +21,12 @@ require('omml2img').renderFromString(string_with_omml, {file_type: 'jpeg', encod
     });
 ```
     
-Dependencies
+Dependencies & Requirements
 --------
-The module uses [JEuclid][1] that work on Java. So Java must be installed on machine. Also, module will work only on linux. Sorry for that.
-
-[1]:['http://jeuclid.sourceforge.net/']
+The module uses [JEuclid](http://jeuclid.sourceforge.net/) that work on Java. So Java must be installed on machine. Also, module will work only on linux. Sorry for that.
+The libraries and programms you must install too use module:
+* [libxml2](http://www.xmlsoft.org/) (libxml2-dev package for Debian-based distros)
+* [libxslt](http://xmlsoft.org/xslt/index.html) (libxslt-dev package for Debian-based distros)
+* [libexslt](http://xmlsoft.org/xslt/EXSLT/) (libxslt-dev package for Debian-based distros)
+* xml2-config (Needs to be on PATH)
+* [ImageMagick](http://www.imagemagick.org/)

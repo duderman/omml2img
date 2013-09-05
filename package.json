@@ -1,7 +1,7 @@
 {
   "name": "omml2img",
   "description": "Render Office MathML to image",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": {
     "name": "Nikolay Norkin",
     "email": "n.e.norkin@gmail.com",
@@ -9,7 +9,8 @@
   },
   "dependencies": {
     "jsdeferred": ">=0.4.0",
-    "node_xslt": ">=0.1.8"
+    "node_xslt": ">=0.1.8",
+    "imagemagick": ">=0.1.3"
   },
   "engines": {
     "node": ">=0.8.14"
@@ -35,7 +36,8 @@
   ],
   "homepage": "http://github.com/duderman/omml2img",
   "main": "index",
+  "readme": "omml2img\n========\n\nNode module for converting Office MathML objects to images\n\nInstallation\n--------\nUse `npm` to install package\n\n    npm install omml2img\nUsage\n--------\nThe usage of module is very simple. All you need is pass to a function named `renderFromString` omml-text, options for renderer(optional) and callback. In that callback you will get the image data (if everything succes) or error (the Error instance if something went wrong). For example:\n```javascript\nrequire('omml2img').renderFromString(string_with_omml, {file_type: 'jpeg', encoding: 'base64' },\n    function(image_data, error){\n        if(error)\n            console.error('Oops :(', error);\n        else\n            console.log('OK! The image is', image_data);\n    });\n```\n    \nDependencies & Requirements\n--------\nThe module uses [JEuclid](http://jeuclid.sourceforge.net/) that work on Java. So Java must be installed on machine. Also, module will work only on linux. Sorry for that.\nThe libraries and programms you must install too use module:\n* [libxml2](http://www.xmlsoft.org/) (libxml2-dev package for Debian-based distros)\n* [libxslt](http://xmlsoft.org/xslt/index.html) (libxslt-dev package for Debian-based distros)\n* [libexslt](http://xmlsoft.org/xslt/EXSLT/) (libxslt-dev package for Debian-based distros)\n* xml2-config (Needs to be on PATH)\n* [ImageMagick](http://www.imagemagick.org/)",
   "readmeFilename": "README.md",
-  "_id": "omml2img@0.0.1",
+  "_id": "omml2img@0.0.2",
   "_from": "omml2img"
 }
