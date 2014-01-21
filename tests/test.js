@@ -8,7 +8,7 @@ omml_text.push('<m:oMath xmlns:w="http://schemas.openxmlformats.org/wordprocessi
 
 Deferred.loop(omml_text.length, function(i) {
 	assert.doesNotThrow(function() {
-		renderer.renderFromString(omml_text[i], function(img, err) {
+		renderer.renderFromString(omml_text[i], null, function(img, err) {
 			if (err)
 				console.error(err);
 			assert(img.data);
