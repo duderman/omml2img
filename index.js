@@ -1,182 +1,275 @@
-var xslt = require('node_xslt');
-var fs = require('fs');
-var path = require('path');
-var exec = require('child_process').exec;
-var crypto = require('crypto');
-var Deferred = require('jsdeferred').Deferred;
-var imagemagick = require('imagemagick');
-var self = this;
-var transformedString = '';
-/**
- * Enables debugging messages. If true result file doesn't disappears
- * @const
- * @type {boolean}
- */
-var DEBUG = false;
-/**
- * Array that contains availible file formats
- * @const
- * @type {Array.<string>}
- */
-var availibleFormats = ['jpeg', 'png', 'gif', 'jpg'];
+const fs = require('fs');
+const path = require('path');
 
-/**
- * Strings with schemas needed for conversion
- * @const
- */
-var SCHEMAS_STRINGS = [{
-						name: 'xmlns:m',
-						definition: '"http://schemas.openxmlformats.org/officeDocument/2006/math"'
-					}, {
-						name: 'xmlns:mml',
-						definition: '"http://www.w3.org/1998/Math/MathML"'
-					}, {
-						name: 'xmlns:o',
-						definition: '"urn:schemas-microsoft-com:office:office"'
-					}, {
-						name: 'xmlns:r',
-						definition: '"http://schemas.openxmlformats.org/officeDocument/2006/relationships"'
-					}, {
-						name: 'xmlns:v',
-						definition: '"urn:schemas-microsoft-com:vml"'
-					}, {
-						name: 'xmlns:w',
-						definition: '"http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
-					}, {
-						name: 'xmlns:w10',
-						definition: '"urn:schemas-microsoft-com:office:word"'
-					}, {
-						name: 'xmlns:wp',
-						definition: '"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"'
-					}];
+const exec = require('child_process').exec;
+const crypto = require('crypto');
 
-/**
- * Adds missing schemas to omml string
- *
- * @returns {string} Result omml string with schemas
- */
-function addSchemas(omml) {
-	var omath_index = omml.indexOf('>');
-	if(omath_index < 0)
-		return;
-	var result_omml = omml.substr(0, omath_index);
-	for(var i = 0; i < SCHEMAS_STRINGS.length; i++)
-		if(result_omml.indexOf(SCHEMAS_STRINGS[i].name)<0)
-			result_omml += ' '+SCHEMAS_STRINGS[i].name+'='+SCHEMAS_STRINGS[i].definition;
-	result_omml += omml.substring(omath_index, omml.length);
-	return result_omml;
-}
+const libxslt = require('libxslt');
+const libxmljs = libxslt.libxmljs;
+const imagemagick = require('imagemagick');
+const _ = require('underscore');
 
 
-/**
- *
- * Execute shell scripts
- *
- * @returns {string} Result file name
- *
- */
-function executeExternal() {
-	var d = new Deferred();
-	var files_dir = path.resolve(__dirname, 'files');
-	var tmp_name = 'tmp_' + crypto.createHash('sha1').update(Math.random().toString()).digest('hex');
-	var exec_string = 'echo \'' + transformedString + '\' > ' + files_dir + '/' + tmp_name + '.mml && ' + path.resolve(__dirname, 'lib/jeuclid/bin/mml2xxx') + ' ' + files_dir + '/' + tmp_name + '.mml ' + files_dir + '/' + tmp_name + '.' + self.options.file_type + ' -backgroundColor ' + self.options.backgroundColor + ' -fontSize ' + self.options.fontSize + (!DEBUG ? ' && rm ' + files_dir + '/' + tmp_name + '.mml' : '');
-	if (DEBUG)
-		console.log('exec_string: ', exec_string);
-	exec(exec_string, function(error, stdout, stderr) {
-		if (error !== null) {
-			if (DEBUG)
-				console.error('exec error: ', error);
-			d.fail(new Error('Error while executing external script: ' + error.message));
+module.exports = {
+
+	/**
+	 * The storage of module options with default values
+	 *
+	 * @access	private
+	 * @type	{Object}
+	*/
+	_options: {
+		// Debugging mode
+		debug: false,
+
+		// Colorize debugging output
+		colorize: false,
+
+		// Path to temporary directory
+		tmp_dir: path.resolve(__dirname, 'files'),
+
+		// Flag for a delete a temporary files
+		remove_file: true,
+
+		// In which encoding image data will be returned
+		encoding: 'utf8',
+
+		// Background color of image file
+		backgroundColor: 'white',
+
+		// Font size uses in image file
+		fontSize: 40,
+
+		// File type for image
+		file_type: 'png'
+	},
+
+
+	/**
+	 * Array with namespases of XML document
+	 *
+	 * @access	private
+	 * @type	{Array}
+	*/
+	_namespaces: [
+		{ prefix: 'm', href: 'http://schemas.openxmlformats.org/officeDocument/2006/math' },
+		{ prefix: 'mml', href: 'http://www.w3.org/1998/Math/MathML' },
+		{ prefix: 'o', href: 'urn:schemas-microsoft-com:office:office' },
+		{ prefix: 'r', href: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships' },
+		{ prefix: 'v', href: 'urn:schemas-microsoft-com:vml' },
+		{ prefix: 'w', href: 'http://schemas.openxmlformats.org/wordprocessingml/2006/main' },
+		{ prefix: 'w10', href: 'urn:schemas-microsoft-com:office:word' },
+		{ prefix: 'wp', href: 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing' }
+	],
+
+
+	/**
+	 * Array that contains availiable file formats
+	 *
+	 * @access	private
+	 * @type	{Array}
+	*/
+	_availableFormats: ['jpeg', 'png', 'gif', 'jpg'],
+
+
+	/**
+	 * Render equation image representation from string containing Office MathML
+	 *
+	 * @access	public
+	 * @param	{String}	String with Office MathML code
+	 * @param	{Object}	Renderer options, optional parameter
+	 * @returns	{Object}
+	*/
+	renderFromString: function (omml, options) {
+		return new Promise((resolve, reject) => {
+
+			if (!_.isString(omml))
+				throw new Error('Wrong argument passed as omml to renderer');
+
+			this._setOptions(options);
+
+			libxslt.parseFile(path.resolve(__dirname, 'lib/OMML2MML.XSL'), function (err, stylesheet) {
+				if (err) return reject(err);
+
+				return resolve(stylesheet);
+			})
+		})
+		.then((stylesheet) => {
+			"use strict";
+
+			let document = libxmljs.parseXml(omml);
+			this._addNamespaces(document);
+
+			let documentStr = document.toString();
+			this._debug('Office MathML as XML: ', documentStr);
+
+			const transformedString = stylesheet.apply(documentStr);
+			this._debug('Transformed String: ', transformedString);
+			return this._writeMml(transformedString);
+		})
+		.then(this._executeExternal.bind(this))
+		.then(this._readImage.bind(this))
+	},
+
+
+	/**
+	 * Setup custom options
+	 *
+	 * @access	private
+	 * @param	{Object}	Options for customization default options
+	 * @returns null
+	 */
+	_setOptions: function (options) {
+		if (_.isObject(options)) {
+			this._options = _.defaults(options, this._options);
+
+			if (this._availableFormats.indexOf(this._options.file_type) == -1)
+				throw new Error('Wrong file_type passed to renderer');
 		}
-		d.call(files_dir + '/' + tmp_name + '.' + self.options.file_type);
-	});
-	return d;
-}
+	},
 
-/**
- *
- * Read results of previous function
- * @see executeExternal
- *
- * @returns {{string Image data, { number width, number height} dimensions Contain image features, string file_path Path where image file saved }}
- *
- */
-function readResult(tmp_name) {
-	var d = new Deferred();
-	var data = fs.readFile(tmp_name, self.options.encoding, function(err, data) {
-		if (err)
-			d.fail(err);
-		var image = {
-			'data': data
-		};
-		imagemagick.identify(tmp_name, function(err, features) {
-			if (err)
-				d.fail(err);
-			image.dimensions = {
-				width: features.width,
-				height: features.height
-			};
-			if (!DEBUG && self.options.remove_file)
-				fs.unlinkSync(tmp_name);
-			else
-				image.file_path = tmp_name;
-			d.call(image);
-		});
-	});
-	return d;
-}
 
-/**
- *
- * Render equation image representation from string containing Office MathML
- *
- * @requires omml
- * @requires cb
- *
- * @param {string} omml String with Office MathML
- * @param {[{[encoding=utf8]: string In which encoding image data will be returned, [backgroundColor=white]: string, [fontColor=40]: number, [file_type=png]: string File type for image, [remove_file=true]: boolean Do you need to delete a file }]} options Must of them identical with mml2xxx generator
- * @param {function(string Contain image data in given encoding, Error)} cb Callback
- *
- */
-exports.renderFromString = function(omml, options, cb) {	
-	if (arguments.length == 2 && typeof arguments[1] == 'function' && typeof arguments[0] == 'string') {
-		cb = options;
-		options = null;
+	/**
+	 * Adds missing namespaces to XML through pointers of object
+	 *
+	 * @access	private
+	 * @param	{Object}	libxmljs Document
+	 * @returns	null
+	*/
+	_addNamespaces: function (document) {
+		this._namespaces.forEach(function (ns) {
+			this.namespace(ns.prefix, ns.href);
+		}, document.root())
+	},
+
+
+	/**
+	 * Write MathML to temporary file
+	 *
+	 * @access	private
+	 * @param	{String}	String that contains MathML
+	 * @returns	{String}	Path to mml file
+	*/
+	_writeMml: function (str) {
+		return new Promise((resolve, reject) => {
+			const tmpPath = path.normalize(`${this._options.tmp_dir}/${crypto.createHash('sha1').update(str).digest('hex')}.mml`);
+			fs.writeFile(tmpPath, str, function (err) {
+				if (err) return reject(err);
+				resolve(tmpPath);
+			})
+		})
+	},
+
+
+	/**
+	 * Execute shell command
+	 *
+	 * @access	private
+	 * @param	{String}	Path to mml file
+	 * @returns	{String}	Path to image file
+	*/
+	_executeExternal: function (mmlPath) {
+		return new Promise((resolve, reject) => {
+			const imagePath = mmlPath.replace('.mml', `.${this._options.file_type}`);
+
+			const execArgs = [
+				path.resolve(__dirname, 'lib/jeuclid/bin/mml2xxx'),
+				mmlPath,
+				imagePath,
+				`-backgroundColor ${this._options.backgroundColor}`,
+				`-fontSize ${this._options.fontSize}`
+			];
+
+			const execStr = execArgs.join(' ');
+			this._debug('Execute command:', execStr);
+			exec(execStr, (err, stdout, stderr) => {
+				if (err) return reject(err);
+
+				if (!this._options.debug && this._options.remove_file) {
+					fs.unlink(mmlPath, function (err) {
+						if (err) return reject(err);
+						resolve(imagePath);
+					})
+				}
+				else {
+					resolve(imagePath);
+				}
+			});
+		})
+	},
+
+
+	/**
+	 * Read image file
+	 *
+	 * @access	private
+	 * @param	{String}	Path to image file
+	 * @returns	{Object}
+	*/
+	_readImage: function (imagePath) {
+		return new Promise((resolve, reject) => {
+			fs.readFile(imagePath, this._options.encoding, (err, encodedData) => {
+				if (err) return reject(err);
+
+				var image = {
+					'data': encodedData
+				};
+
+				imagemagick.identify(imagePath, (err, features) => {
+					if (err) return reject(err);
+
+					image.dimensions = {
+						width: features.width,
+						height: features.height
+					};
+
+					if (!this._options.debug && this._options.remove_file) {
+						fs.unlink(imagePath, function (err) {
+							if (err) return reject(err);
+							resolve(image);
+						})
+					}
+					else {
+						image.path = imagePath;
+						resolve(image);
+					}
+				});
+			});
+		})
+	},
+
+
+	/**
+	 * Print debug info
+	 *
+	 * @access	private
+	 * @param	{Arguments}
+	 * @returns	null
+	*/
+	_debug: function () {
+		if (this._options.debug) {
+			_.each(arguments, (arg, i) => {
+
+				const info = [];
+
+				// Print colorized
+				if (this._options.colorize) {
+					// First argument is caption of info data
+					if (i == 0)
+						info.push('\x1b[33m\x1b[1m');
+					else
+						info.push('\033[36m');
+				}
+
+				info.push(arg);
+
+				if (this._options.colorize) {
+					// Setup default color options
+					info.push('\033[0m');
+				}
+
+				console.log(...info);
+			})
+		}
 	}
-	if (cb == null)
-		throw new Error('I need callback');
-	if (omml == null || typeof omml != 'string')
-		cb(null, new Error('Wrong argument passed as omml to renderer'));
-	if (options == null)
-		this.options = {};
-	else
-		this.options = options;
-
-	omml = addSchemas(omml);
-
-	this.options.encoding = this.options.encoding || 'utf8';
-	this.options.backgroundColor = this.options.backgroundColor || 'white';
-	this.options.fontSize = this.options.fontSize || 40;
-	this.options.file_type = this.options.file_type || 'png';
-	this.options.file_type = this.options.file_type.replace('.', '').trim();
-	if(this.options.remove_file == null)
-		this.options.remove_file = true;
-	if (availibleFormats.indexOf(this.options.file_type) == -1)
-		cb(null, new Error('Wrong file_type passed to renderer'));
-	try {
-		stylesheet = xslt.readXsltFile(path.resolve(__dirname, 'lib/OMML2MML.XSL'));
-		document = xslt.readXmlString(omml);
-		var parameters = [];
-		transformedString = xslt.transform(stylesheet, document, parameters);
-	} catch (e) {
-		cb(null, new Error('Error when trying to convert OMML to MML: ' + e.message));
-	}
-
-	Deferred.call(executeExternal).next(readResult).next(function(img) {
-		cb(img);
-	})
-		.error(function(error) {
-			cb(null, new Error('Error while converting: ' + error+'\n'+error.stack));
-		});
-	return;
 }
