@@ -30,7 +30,7 @@ There are few options that you can pass to a `renderFromString` function in `opt
   * `file_type` - File type for image. Default - png
   * `remove_file` - Flag for a delete a temporary files. Default - true
 
-Also are availabe two options for debugging:
+Also are avaliabe two options for debugging:
   * `debug` - Option to enable debug logging. Default - false
   * `colorize` - Option to colorize log output. Default - false
 
