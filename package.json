@@ -22,9 +22,6 @@
   "engines": {
     "node": ">=5.0.0"
   },
-  "os": [
-    "linux"
-  ],
   "keywords": [
     "omml",
     "image",

@@ -1,7 +1,7 @@
 omml2img
 ========
 
-Node module for converting Office MathML objects to images
+Node module for converting Office MathML objects to images in PNG, GIF and JPEG formats
 
 Installation
 --------
@@ -12,33 +12,34 @@ Usage
 --------
 The usage of module is very simple. All you need is pass to a function named `renderFromString` omml-text, options for renderer(optional) and callback. In that callback you will get the image data (if everything succes) or error (the Error instance if something went wrong). For example:
 ```javascript
-require('omml2img').renderFromString(string_with_omml, {file_type: 'jpeg', encoding: 'base64' },
-    function(image, error){
-        if(error)
-            console.error('Oops :(', error);
-        else
-            console.log('OK! The image is', image.data);
-    });
+require('omml2img').renderFromString(string_with_omml, {file_type: 'jpeg', encoding: 'base64' })
+.then(function (image) {
+    console.log('OK! The image is', image.data);
+})
+.catch(function (err) {
+    console.error('Oops :(', err);
+);
 ```
 Options
 --------
 There are few options that you can pass to a `renderFromString` function in `options` object:
-
+  * `tmp_dir` - Path to temporary directory. Default - `files` in the module directory
   * `encoding` - In which encoding image data will be returned. Default - utf8
-  * `backgroundColor`. Default - white
-  * `fontColor`. Default - 40
+  * `backgroundColor` - Background color of image file. Default - white
+  * `fontColor` -Font size uses in image file. Default - 40
   * `file_type` - File type for image. Default - png
-  * `remove_file` - Do you need to delete image file after parsing. If not there will be file path in result object. Default - true.
+  * `remove_file` - Flag for a delete a temporary files. Default - true
+
+Also are availabe two options for debugging:
+  * `debug` - Option to enable debug logging. Default - false
+  * `colorize` - Option to colorize log output. Default - false
+
 
 Many of them identical with mml2xxx generator.
 
-There is special constant `DEBUG` in source code. If it's true, information about rendering and execution will be printed to console.
 Dependencies & Requirements
 --------
-The module uses [JEuclid](http://jeuclid.sourceforge.net/) that work on Java. So Java must be installed on machine. Also, module will work only on linux. Sorry for that.
+The module uses [JEuclid](http://jeuclid.sourceforge.net/) that work on Java. So Java must be installed on machine.
 The libraries and programms you must install too use module:
-* [libxml2](http://www.xmlsoft.org/) (libxml2-dev package for Debian-based distros)
-* [libxslt](http://xmlsoft.org/xslt/index.html) (libxslt-dev package for Debian-based distros)
-* [libexslt](http://xmlsoft.org/xslt/EXSLT/) (libxslt-dev package for Debian-based distros)
-* xml2-config (Needs to be on PATH)
+* [Python](http://www.python.org/)
 * [ImageMagick](http://www.imagemagick.org/)
