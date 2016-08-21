@@ -1,23 +1,27 @@
 {
   "name": "omml2img",
   "description": "Render Office MathML to image",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "author": {
     "name": "Nikolay Norkin",
     "email": "n.e.norkin@gmail.com",
     "url": "zduderman.blogspot.ru"
   },
+  "contributors": [
+    {
+      "name": "Pavel Sapachev",
+      "email": "pavel@sapachev.com",
+      "url": "http://sapachev.com"
+    }
+  ],
   "dependencies": {
-    "jsdeferred": ">=0.4.0",
-    "node_xslt": ">=0.1.8",
-    "imagemagick": ">=0.1.3"
+    "imagemagick": ">=0.1.3",
+    "libxslt": "^0.6.3",
+    "underscore": "^1.8.3"
   },
   "engines": {
-    "node": ">=0.8.14"
+    "node": ">=5.0.0"
   },
-  "os": [
-    "linux"
-  ],
   "keywords": [
     "omml",
     "image",
