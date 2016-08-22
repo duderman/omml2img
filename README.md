@@ -42,4 +42,3 @@ Dependencies & Requirements
 The module uses [JEuclid](http://jeuclid.sourceforge.net/) that work on Java. So Java must be installed on machine.
 The libraries and programms you must install too use module:
 * [Python](http://www.python.org/)
-* [ImageMagick](http://www.imagemagick.org/)
