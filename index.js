@@ -213,9 +213,11 @@ module.exports = {
 
 				const dim = sizeOf(imagePath);
 
+				// console.log(imagePath, dim);
+
 				resolve({
 					data: encodedData,
-					dimension: {
+					dimensions: {
 						width: dim.width,
 						height: dim.height
 					}
