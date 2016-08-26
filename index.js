@@ -6,7 +6,7 @@ const crypto = require('crypto');
 
 const libxslt = require('libxslt');
 const libxmljs = libxslt.libxmljs;
-const imagemagick = require('imagemagick');
+const sizeOf = require('image-size');
 const _ = require('underscore');
 
 
@@ -211,27 +211,13 @@ module.exports = {
 			fs.readFile(imagePath, this._options.encoding, (err, encodedData) => {
 				if (err) return reject(err);
 
-				var image = {
-					'data': encodedData
-				};
+				const dim = sizeOf(imagePath);
 
-				imagemagick.identify(imagePath, (err, features) => {
-					if (err) return reject(err);
-
-					image.dimensions = {
-						width: features.width,
-						height: features.height
-					};
-
-					if (!this._options.debug && this._options.remove_file) {
-						fs.unlink(imagePath, function (err) {
-							if (err) return reject(err);
-							resolve(image);
-						})
-					}
-					else {
-						image.path = imagePath;
-						resolve(image);
+				resolve({
+					data: encodedData,
+					dimensions: {
+						width: dim.width,
+						height: dim.height
 					}
 				});
 			});
